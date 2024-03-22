@@ -225,7 +225,7 @@ int main() {
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
-        // render the loaded model
+        // render statue model
         glm::mat4 modelStatue = glm::mat4(1.0f);
         modelStatue = glm::translate(modelStatue,
                                programState->statuePosition); // translate it down so it's at the center of the scene
@@ -235,11 +235,12 @@ int main() {
         ourShader.setMat4("model", modelStatue);
         statueModel.Draw(ourShader);
 
+        //Render light model
         glm::mat4 modelLight = glm::mat4(1.0f);
         modelLight = glm::translate(modelLight, programState->statuePosition +
-                                        glm::vec3(programState->statuePosition.x +  sin(time * 3.0f) * 2.0f,
+                                        glm::vec3(programState->statuePosition.x +  sin(time * 1.5f) * 2.0f,
                                                   programState->statuePosition.y ,
-                                                  programState->statuePosition.z +  cos(time * 3.0f) * 2.0f) );
+                                                  programState->statuePosition.z +  cos(time * 1.5f) * 2.0f) );
         modelLight = glm::translate(modelLight, glm::vec3(0.0f, 8.0f,0.0f));
         modelLight = glm::scale(modelLight, glm::vec3(0.8f));
         ourShader.setMat4("model", modelLight);
