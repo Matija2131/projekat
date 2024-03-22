@@ -165,8 +165,11 @@ int main() {
 
     // load models
     // -----------
-    Model ourModel("resources/objects/statue/Colossal_Bust_Rameses_II.obj",true);
-    ourModel.SetShaderTextureNamePrefix("material.");
+    Model statueModel("resources/objects/statue/Colossal_Bust_Rameses_II.obj",true);
+    statueModel.SetShaderTextureNamePrefix("material.");
+
+    Model lightModel("resources/objects/light/sun.obj");
+    lightModel.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
@@ -191,6 +194,7 @@ int main() {
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+        float time = currentFrame;
 
         // input
         // -----
@@ -229,7 +233,17 @@ int main() {
         modelStatue = glm::rotate(modelStatue, glm::radians(-90.0f), glm::vec3(1.0f,0.0f,0.0f));
         modelStatue = glm::rotate(modelStatue, glm::radians(105.5f), glm::vec3(0.0f,0.0f,1.0f));
         ourShader.setMat4("model", modelStatue);
-        ourModel.Draw(ourShader);
+        statueModel.Draw(ourShader);
+
+        glm::mat4 modelLight = glm::mat4(1.0f);
+        modelLight = glm::translate(modelLight, programState->statuePosition +
+                                        glm::vec3(programState->statuePosition.x +  sin(time * 3.0f) * 2.0f,
+                                                  programState->statuePosition.y ,
+                                                  programState->statuePosition.z +  cos(time * 3.0f) * 2.0f) );
+        modelLight = glm::translate(modelLight, glm::vec3(0.0f, 8.0f,0.0f));
+        modelLight = glm::scale(modelLight, glm::vec3(0.8f));
+        ourShader.setMat4("model", modelLight);
+        lightModel.Draw(ourShader);
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
