@@ -245,12 +245,15 @@ int main() {
 
     programState->faces =
             {
-                    FileSystem::getPath("resources/textures/skybox/right.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/left.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/top.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/bottom.jpg"),
                     FileSystem::getPath("resources/textures/skybox/front.jpg"),
                     FileSystem::getPath("resources/textures/skybox/back.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/top.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/bottom.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/right.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/left.jpg"),
+
+
+
             };
 
     programState->cubemapTexture = loadCubemap(programState->faces);
@@ -344,6 +347,9 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteBuffers(1, &skyboxVAO);
 
     programState->SaveToFile("resources/program_state.txt");
     delete programState;
