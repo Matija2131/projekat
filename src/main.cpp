@@ -307,6 +307,10 @@ int main() {
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
 
+        // blending
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         // render statue model
         glm::mat4 modelStatue = glm::mat4(1.0f);
         modelStatue = glm::translate(modelStatue,
