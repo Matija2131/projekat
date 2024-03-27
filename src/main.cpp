@@ -303,6 +303,10 @@ int main() {
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
+        // face culling
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+
         // render statue model
         glm::mat4 modelStatue = glm::mat4(1.0f);
         modelStatue = glm::translate(modelStatue,
