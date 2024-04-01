@@ -34,8 +34,6 @@ void renderQuad1();
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-bool spotlightOn = true;
-
 
 // camera
 
@@ -321,26 +319,6 @@ int main() {
         // -----
         processInput(window);
 
-        // spotLight
-        if (spotlightOn) {
-            ourShader.setVec3("pointLights[5].position", programState->camera.Position+ glm::vec3(0.0f,0.2f,0.0f) + glm::vec3(programState->camera.Front.x*0.9f+sin(time*2.0f)*0.1f,programState->camera.Front.y,programState->camera.Front.z*0.9f+cos(time*2.0f)*0.1f)*3.0f);
-            ourShader.setVec3("pointLights[5].ambient", pointLight.ambient);
-            ourShader.setVec3("pointLights[5].diffuse", pointLight.diffuse);
-            ourShader.setVec3("pointLights[5].specular", pointLight.specular);
-            ourShader.setFloat("pointLights[5].constant", pointLight.constant);
-            ourShader.setFloat("pointLights[5].linear", pointLight.linear);
-            ourShader.setFloat("pointLights[5].quadratic", pointLight.quadratic);
-
-        }else{
-            ourShader.setVec3("pointLights[5].position", programState->camera.Position );
-            ourShader.setVec3("pointLights[5].ambient", glm::vec3(0.0f));
-            ourShader.setVec3("pointLights[5].diffuse", glm::vec3(0.0f));
-            ourShader.setVec3("pointLights[5].specular", glm::vec3(0.0f));
-            ourShader.setFloat("pointLights[5].constant", pointLight.constant);
-            ourShader.setFloat("pointLights[5].linear", pointLight.linear);
-            ourShader.setFloat("pointLights[5].quadratic", pointLight.quadratic);
-
-        }
 
         // render
         // ------
@@ -420,15 +398,6 @@ int main() {
 
             nmShader.setVec3("viewPos", programState->camera.Position);
             nmShader.setFloat("material.shininess", 32.0f);
-
-            if (spotlightOn) {
-                nmShader.setVec3("lightPos", programState->camera.Position - glm::vec3(0.0f, 2.5f, 0.0f) +
-                                             glm::vec3(programState->camera.Front.x + sin(time * 2.0f) * 0.1f,
-                                                       -programState->camera.Front.y,
-                                                       programState->camera.Front.z + cos(time * 2.0f) * 0.1f) * 3.0f);
-            }else{
-                nmShader.setVec3("lightPos", programState->camera.Position + glm::vec3(0.0f,-2.0f,0.0f));
-            }
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, floorTexture);
@@ -572,14 +541,6 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         } else {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        }
-    }
-
-    if (key == GLFW_KEY_F && action == GLFW_PRESS){
-        if(spotlightOn){
-            spotlightOn = false;
-        }else{
-            spotlightOn = true;
         }
     }
 }
