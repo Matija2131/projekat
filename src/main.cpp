@@ -30,7 +30,7 @@ unsigned int loadCubemap(vector<std::string> faces);
 
 unsigned int loadTexture(char const *path);
 
-void renderQuad1();
+void renderQuad();
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -62,7 +62,7 @@ struct ProgramState {
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
     glm::vec3 statuePosition = glm::vec3(0.0f,-1.1f,0.0f);
-    vector<std::string> faces;
+   vector<std::string> faces;
     unsigned int cubemapTexture;
     float statueScale = 2.5f;
     PointLight pointLight;
@@ -170,6 +170,8 @@ int main() {
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
 
+    //blending shader
+    Shader blendingShader("resources/shaders/blending.vs", "resources/shaders/blending.fs");
     //skybox shader
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
@@ -185,14 +187,13 @@ int main() {
     lightModel.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
     pointLight.ambient = glm::vec3(1.0, 1.0, 1.0);
     pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
     pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
+    pointLight.linear = 0.12f;
+    pointLight.quadratic = 0.035f;
 
 // skybox
     float skyboxVertices[] = {
@@ -262,9 +263,8 @@ int main() {
             };
 
     programState->cubemapTexture = loadCubemap(programState->faces);
-    // floor posiition
+    // Grass vertices
     float transparentVertices[] = {
-            // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
             0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
             0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
             1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
@@ -273,6 +273,12 @@ int main() {
             1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
             1.0f,  0.5f,  0.0f,  1.0f,  0.0f
     };
+
+    //grass position
+    vector<glm::vec3> grassPositions;
+    for(int i =0;i<10;i++){
+        grassPositions.push_back(programState->statuePosition + glm::vec3(0.0f, 15.0f, 0.0f));
+    }
 
 
     // transparent VAO
@@ -288,11 +294,13 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glBindVertexArray(0);
     //Load textures
-    unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/floor/Sand1.jpg").c_str());
-    unsigned int floorTextureNormal = loadTexture(FileSystem::getPath("resources/textures/floor/Sand_normal.jpg").c_str());
+    unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/floor/Floor.jpg").c_str());
+    unsigned int floorTextureNormal = loadTexture(FileSystem::getPath("resources/textures/floor/Floor_normal.jpg").c_str());
+    unsigned int grassTexture = loadTexture(FileSystem::getPath("resources/textures/floor/grass.png").c_str());
 
 
 
+    //shader configuration
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
@@ -301,6 +309,9 @@ int main() {
     nmShader.setInt("diffuseMap", 0);
     nmShader.setInt("normalMap", 1);
     nmShader.setVec3("changeColor", glm::vec3(1.0f,1.0f,1.0f));
+
+    blendingShader.use();
+    blendingShader.setInt("texture1", 0);
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -327,8 +338,10 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-        ourShader.setVec3("pointLight.position", pointLight.position);
+        ourShader.setVec3("pointLight.position", programState->statuePosition +
+                                                 glm::vec3(programState->statuePosition.x +  sin(time * 1.2f) * 4.0f,
+                                                           programState->statuePosition.y ,
+                                                           programState->statuePosition.z +  cos(time * 1.2f) * 4.0f) );
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
         ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
         ourShader.setVec3("pointLight.specular", pointLight.specular);
@@ -364,10 +377,10 @@ int main() {
 
         //Render light model
         glm::mat4 modelLight = glm::mat4(1.0f);
-        modelLight = glm::translate(modelLight, programState->statuePosition +
-                                        glm::vec3(programState->statuePosition.x +  sin(time * 1.2f) * 4.0f,
-                                                  programState->statuePosition.y ,
-                                                  programState->statuePosition.z +  cos(time * 1.2f) * 4.0f) );
+        modelLight = glm::translate(modelLight,  programState->statuePosition +
+                                                 glm::vec3(programState->statuePosition.x +  sin(time * 1.2f) * 4.0f,
+                                                           programState->statuePosition.y ,
+                                                           programState->statuePosition.z +  cos(time * 1.2f) * 4.0f) );
         modelLight = glm::translate(modelLight, glm::vec3(0.0f, 8.0f,0.0f));
         modelLight = glm::scale(modelLight, glm::vec3(0.8f));
         ourShader.setMat4("model", modelLight);
@@ -415,12 +428,29 @@ int main() {
                 modelFloor = glm::translate(modelFloor, glm::vec3(2.0f, 0.0f, 0.0f));
                 modelFloor = glm::rotate(modelFloor,glm::radians(-90.0f), glm::vec3(1.0f ,0.0f, 0.0f));//ggg
                 nmShader.setMat4("model", modelFloor);
-                renderQuad1();
+                renderQuad();
                 modelFloor = glm::rotate(modelFloor,glm::radians(90.0f), glm::vec3(1.0f ,0.0f, 0.0f));//ggg
 
             }
             modelFloor = glm::translate(modelFloor, glm::vec3(0.0f, 0.0f, 2.0f));
             modelFloor = glm::translate(modelFloor, glm::vec3(-16.0f, 0.0f, 0.0f));
+        }
+
+        //grass
+        blendingShader.use();
+        glm::mat4 modelGrass = glm::mat4(1.0f);
+        blendingShader.setMat4("projection", projection);
+        blendingShader.setMat4("view", view);
+        glBindVertexArray(transparentVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, grassTexture);
+        for (unsigned int i = 0; i < 10; i++)
+        {
+            modelGrass = glm::mat4(1.0f);
+            modelGrass = glm::scale(modelGrass, glm::vec3(0.5f));
+            modelGrass = glm::translate(modelGrass, grassPositions[i]);
+            blendingShader.setMat4("model", modelGrass);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
 
@@ -611,11 +641,11 @@ unsigned int loadTexture(char const *path)
 
     return textureID;
 }
-unsigned int quadVAO1 = 0;
-unsigned int quadVBO1;
-void renderQuad1()
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
 {
-    if (quadVAO1 == 0)
+    if (quadVAO == 0)
     {
         // positions
         glm::vec3 pos1(-1.0f,  1.0f, 0.0f);
@@ -680,10 +710,10 @@ void renderQuad1()
                 pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
         };
         // configure plane VAO
-        glGenVertexArrays(1, &quadVAO1);
-        glGenBuffers(1, &quadVBO1);
-        glBindVertexArray(quadVAO1);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO1);
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)0);
@@ -696,7 +726,7 @@ void renderQuad1()
         glEnableVertexAttribArray(4);
         glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(11 * sizeof(float)));
     }
-    glBindVertexArray(quadVAO1);
+    glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
