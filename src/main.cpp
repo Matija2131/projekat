@@ -61,7 +61,7 @@ struct ProgramState {
     bool ImGuiEnabled = false;
     Camera camera;
     bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 statuePosition = glm::vec3(0.0f,-1.1f,0.0f);
+    glm::vec3 statuePosition = glm::vec3(0.0f,-1.1f,5.0f);
    vector<std::string> faces;
     unsigned int cubemapTexture;
     float statueScale = 2.5f;
@@ -263,40 +263,9 @@ int main() {
             };
 
     programState->cubemapTexture = loadCubemap(programState->faces);
-    // Grass vertices
-    float transparentVertices[] = {
-            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
-            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-
-            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
-    };
-
-    //grass position
-    vector<glm::vec3> grassPositions;
-    for(int i =0;i<10;i++){
-        grassPositions.push_back(programState->statuePosition + glm::vec3(0.0f, 15.0f, 0.0f));
-    }
-
-
-    // transparent VAO
-    unsigned int transparentVAO, transparentVBO;
-    glGenVertexArrays(1, &transparentVAO);
-    glGenBuffers(1, &transparentVBO);
-    glBindVertexArray(transparentVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glBindVertexArray(0);
     //Load textures
     unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/floor/Floor.jpg").c_str());
     unsigned int floorTextureNormal = loadTexture(FileSystem::getPath("resources/textures/floor/Floor_normal.jpg").c_str());
-    unsigned int grassTexture = loadTexture(FileSystem::getPath("resources/textures/floor/grass.png").c_str());
 
 
 
@@ -436,24 +405,6 @@ int main() {
             modelFloor = glm::translate(modelFloor, glm::vec3(-16.0f, 0.0f, 0.0f));
         }
 
-        //grass
-        blendingShader.use();
-        glm::mat4 modelGrass = glm::mat4(1.0f);
-        blendingShader.setMat4("projection", projection);
-        blendingShader.setMat4("view", view);
-        glBindVertexArray(transparentVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, grassTexture);
-        for (unsigned int i = 0; i < 10; i++)
-        {
-            modelGrass = glm::mat4(1.0f);
-            modelGrass = glm::scale(modelGrass, glm::vec3(0.5f));
-            modelGrass = glm::translate(modelGrass, grassPositions[i]);
-            blendingShader.setMat4("model", modelGrass);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
-
-
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
 
@@ -536,10 +487,8 @@ void DrawImGui(ProgramState *programState) {
 
     {
         static float f = 0.0f;
-        ImGui::Begin("Hello window");
-        ImGui::Text("Hello text");
-        ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
-        ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
+        ImGui::Begin("Project");
+        ImGui::Text("Settings");
         ImGui::DragFloat3("Statue position", (float*)&programState->statuePosition);
         ImGui::DragFloat("Statue scale", &programState->statueScale, 0.05, 0.1, 4.0);
 
