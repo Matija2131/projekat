@@ -34,6 +34,7 @@ void renderQuad();
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+bool blinn = false;
 
 // camera
 
@@ -249,6 +250,27 @@ int main() {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+    //Grass vertices
+    float transparentVertices[] = {
+            // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+            0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+            1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+            1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+    };
+
+    //Grass position
+    vector<glm::vec3> grassPositions;
+    grassPositions.push_back(glm::vec3(0.0f,-1.1f,-5.0f));
+    grassPositions.push_back(glm::vec3( -1.5f,  -1.0f,  -0.51f));
+    grassPositions.push_back(glm::vec3( -0.0f,  -1.0f,  -0.7f));
+    grassPositions.push_back(glm::vec3(-0.3f,  -1.0f, -2.3f));
+    grassPositions.push_back(glm::vec3( -0.5f,  -1.0f, -0.6f));
+
+
     programState->faces =
             {
                     FileSystem::getPath("resources/textures/skybox/front.jpg"),
@@ -263,10 +285,24 @@ int main() {
             };
 
     programState->cubemapTexture = loadCubemap(programState->faces);
+
+    // transparent VAO
+    unsigned int transparentVAO, transparentVBO;
+    glGenVertexArrays(1, &transparentVAO);
+    glGenBuffers(1, &transparentVBO);
+    glBindVertexArray(transparentVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glBindVertexArray(0);
+
     //Load textures
     unsigned int floorTexture = loadTexture(FileSystem::getPath("resources/textures/floor/Floor.jpg").c_str());
     unsigned int floorTextureNormal = loadTexture(FileSystem::getPath("resources/textures/floor/Floor_normal.jpg").c_str());
-
+    unsigned int grassTexture = loadTexture(FileSystem::getPath("resources/textures/grass/grass.png").c_str());
 
 
     //shader configuration
@@ -319,6 +355,7 @@ int main() {
         ourShader.setFloat("pointLight.quadratic", pointLight.quadratic);
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
+        ourShader.setBool("blinn", blinn);
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
@@ -329,10 +366,6 @@ int main() {
         // face culling
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
-
-        // blending
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // render statue model
         glm::mat4 modelStatue = glm::mat4(1.0f);
@@ -404,6 +437,25 @@ int main() {
             modelFloor = glm::translate(modelFloor, glm::vec3(0.0f, 0.0f, 2.0f));
             modelFloor = glm::translate(modelFloor, glm::vec3(-16.0f, 0.0f, 0.0f));
         }
+
+        // vegetation
+        blendingShader.use();
+        glm::mat4 modelGrass = glm::mat4(1.0f);
+        blendingShader.setMat4("projection", projection);
+        blendingShader.setMat4("view", view);
+        glBindVertexArray(transparentVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, grassTexture);
+        for (unsigned int i = 0; i <5; i++)
+        {
+            modelGrass = glm::mat4(1.0f);
+            modelGrass = glm::scale(modelGrass, glm::vec3(0.5f));
+            modelGrass = glm::translate(modelGrass, grassPositions[i]);
+            blendingShader.setMat4("model", modelGrass);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+
+
 
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
@@ -521,6 +573,11 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         } else {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS){
+
+        blinn= !blinn;
     }
 }
 
