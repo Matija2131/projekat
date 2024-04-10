@@ -264,12 +264,14 @@ int main() {
 
     //Grass position
     vector<glm::vec3> grassPositions;
-    grassPositions.push_back(glm::vec3(0.0f,-1.1f,-5.0f));
-    grassPositions.push_back(glm::vec3( -1.5f,  -1.0f,  -0.51f));
-    grassPositions.push_back(glm::vec3( -0.0f,  -1.0f,  -0.7f));
-    grassPositions.push_back(glm::vec3(-0.3f,  -1.0f, -2.3f));
-    grassPositions.push_back(glm::vec3( -0.5f,  -1.0f, -0.6f));
-
+    grassPositions.push_back(programState->statuePosition + glm::vec3(4.0f,-0.5f,9.0f));
+    grassPositions.push_back(programState->statuePosition + glm::vec3(4.0f,-0.5f,1.0f));
+    grassPositions.push_back(programState->statuePosition + glm::vec3(-4.0f,-0.5f,9.0f));
+    grassPositions.push_back(programState->statuePosition + glm::vec3(-4.0f,-0.5f,1.0f));
+    grassPositions.push_back(programState->statuePosition + glm::vec3(3.0f,-0.5f,10.0f));
+    grassPositions.push_back(programState->statuePosition + glm::vec3(3.0f,-0.5f,2.0f));
+    grassPositions.push_back(programState->statuePosition + glm::vec3(-3.0f,-0.5f,10.0f));
+    grassPositions.push_back(programState->statuePosition + glm::vec3(-3.0f,-0.5f,2.0f));
 
     programState->faces =
             {
@@ -287,10 +289,10 @@ int main() {
     programState->cubemapTexture = loadCubemap(programState->faces);
 
     // transparent VAO
-    unsigned int transparentVAO, transparentVBO;
-    glGenVertexArrays(1, &transparentVAO);
+    unsigned int vegetationVAO, transparentVBO;
+    glGenVertexArrays(1, &vegetationVAO);
     glGenBuffers(1, &transparentVBO);
-    glBindVertexArray(transparentVAO);
+    glBindVertexArray(vegetationVAO);
     glBindBuffer(GL_ARRAY_BUFFER, transparentVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
@@ -387,6 +389,27 @@ int main() {
         modelLight = glm::scale(modelLight, glm::vec3(0.8f));
         ourShader.setMat4("model", modelLight);
         lightModel.Draw(ourShader);
+
+        // vegetation
+        blendingShader.use();
+        glm::mat4 modelGrass = glm::mat4(1.0f);
+        blendingShader.setMat4("projection", projection);
+        blendingShader.setMat4("view", view);
+        glBindVertexArray(vegetationVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, grassTexture);
+
+
+        for (unsigned int i = 0; i < grassPositions.size(); i++)
+        {
+            modelGrass = glm::mat4(1.0f);
+            modelGrass = glm::scale(modelGrass, glm::vec3(0.5f));
+            modelGrass = glm::translate(modelGrass, grassPositions[i]);
+            modelGrass = glm::rotate(modelGrass, glm::radians(90.0f), glm::vec3(0.0f,1.0f,0.0f));
+            blendingShader.setMat4("model", modelGrass);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+
 //drawing skybox
         glDepthFunc(GL_LEQUAL);
         skyboxShader.use();
@@ -400,6 +423,7 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
         glDepthFunc(GL_LESS); // set depth function back to default
+
 
         //floor
         {
@@ -437,24 +461,6 @@ int main() {
             modelFloor = glm::translate(modelFloor, glm::vec3(0.0f, 0.0f, 2.0f));
             modelFloor = glm::translate(modelFloor, glm::vec3(-16.0f, 0.0f, 0.0f));
         }
-
-        // vegetation
-        blendingShader.use();
-        glm::mat4 modelGrass = glm::mat4(1.0f);
-        blendingShader.setMat4("projection", projection);
-        blendingShader.setMat4("view", view);
-        glBindVertexArray(transparentVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, grassTexture);
-        for (unsigned int i = 0; i <5; i++)
-        {
-            modelGrass = glm::mat4(1.0f);
-            modelGrass = glm::scale(modelGrass, glm::vec3(0.5f));
-            modelGrass = glm::translate(modelGrass, grassPositions[i]);
-            blendingShader.setMat4("model", modelGrass);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
-
 
 
         if (programState->ImGuiEnabled)
